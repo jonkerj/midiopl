@@ -4,8 +4,10 @@
 #include <OPL2.h>
 #include "allocator.h"
 
+#define CHANNELS 9
+
 MIDI_CREATE_DEFAULT_INSTANCE();
-midiopl::VoiceAllocator va(6);
+midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
 
 /*
@@ -38,13 +40,13 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 	// release all voices
 	va.releaseAll();
 	// note-off these voices
-	for(int channel = 0; channel < 6; channel ++) {
+	for(int channel = 0; channel < CHANNELS; channel ++) {
 		opl2.setKeyOn(channel, false);
 	}
 	// load program
 	if (inProgram < (sizeof(midiInstruments) / sizeof(midiInstruments[0]))) {
 		Instrument i = opl2.loadInstrument(midiInstruments[inProgram]);
-		for(int channel = 0; channel < 6; channel ++) {
+		for(int channel = 0; channel < CHANNELS; channel ++) {
 			opl2.setInstrument(channel, i);
 		}
 	}
@@ -52,7 +54,6 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 
 void setup() {
 	opl2.init();
-	va = midiopl::VoiceAllocator(6);
 	MIDI.setHandleNoteOn(handleNoteOn);
 	MIDI.setHandleNoteOff(handleNoteOff);
 	MIDI.setHandleProgramChange(handleProgramChange);
