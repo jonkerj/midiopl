@@ -11,18 +11,22 @@ OPL2 opl2;
 #define GET_OCTAVE(note) (note / 12 - 2)
 #define GET_NOTE(note)   (note % 12)
 
-void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
-	// TODO: find out if velocity=0 is sent here
-	if (24 <= inNote && inNote <= 119) {
-		byte channel = va.allocate(inNote);
-		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
-	}
-}
-
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (24 <= inNote && inNote <= 119) {
 		byte channel = va.release(inNote);
 		opl2.setKeyOn(channel, false);
+	}
+}
+
+void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
+	// some midi implementations send notes with velo=0 to signal note-off, so handle this
+	if (inVelocity == 0x00) {
+		handleNoteOff(inChannel, inNote, inVelocity);
+		return;
+	}
+	if (24 <= inNote && inNote <= 119) {
+		byte channel = va.allocate(inNote);
+		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
 	}
 }
 
