@@ -43,7 +43,10 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 	}
 	// load program
 	if (inProgram < (sizeof(midiInstruments) / sizeof(midiInstruments[0]))) {
-		opl2.loadInstrument(midiInstruments[inProgram]);
+		Instrument i = opl2.loadInstrument(midiInstruments[inProgram]);
+		for(int channel = 0; channel < 6; channel ++) {
+			opl2.setInstrument(channel, i);
+		}
 	}
 }
 
