@@ -8,6 +8,10 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(6);
 OPL2 opl2;
 
+/*
+ OPL2 lib uses octave (0..7) and note (0..11) to address notes
+ It seems MIDI C2 (=note 24) corresponds with OPL2 octave 0, note 0
+*/
 #define GET_OCTAVE(note) (note / 12 - 2)
 #define GET_NOTE(note)   (note % 12)
 
@@ -31,10 +35,13 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 }
 
 void handleProgramChange(byte inChannel, byte inProgram) {
+	// release all voices
 	va.releaseAll();
+	// note-off these voices
 	for(int channel = 0; channel < 6; channel ++) {
 		opl2.setKeyOn(channel, false);
 	}
+	// load program
 	if (inProgram < (sizeof(midiInstruments) / sizeof(midiInstruments[0]))) {
 		opl2.loadInstrument(midiInstruments[inProgram]);
 	}
