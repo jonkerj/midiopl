@@ -61,13 +61,67 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 }
 
 void handleControlChange(byte inChannel, byte inController, byte inValue) {
-	display.clearDisplay();
-	display.setCursor(0,0);
-	display.print("CC ");
-	display.print(inController, HEX);
-	display.print("=");
-	display.print(inValue, HEX);
-	display.display();
+
+	// CC to OPL2 mapping based on my MK449c
+	switch (inController) {
+		case 0x49: // F1 controls op1 volume
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setVolume(channel, 0, inValue >> 1);
+			break;
+		case 0x48: // F2 controls op1 attack
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setAttack(channel, 0, inValue >> 3);
+			break;
+		case 0x5b: // F3 controls op1 decay
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setDecay(channel, 0, inValue >> 3);
+			break;
+		case 0x5d: // F4 controls op1 sustain
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setSustain(channel, 0, inValue >> 3);
+			break;
+		case 0x4a: // F5 controls op1 release
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setRelease(channel, 0, inValue >> 3);
+			break;
+		case 0x47: // F6 controls op1 waveform
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setWaveForm(channel, 0, inValue >> 5);
+			break;
+		case 0x0a: // C10 controls op2 volume
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setVolume(channel, 1, inValue >> 1);
+			break;
+		case 0x02: // C11 controls op1 attack
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setAttack(channel, 1, inValue >> 3);
+			break;
+		case 0x0c: // C12 controls op1 decay
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setDecay(channel, 1, inValue >> 3);
+			break;
+		case 0x0d: // C13 controls op1 sustain
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setSustain(channel, 0, inValue >> 3);
+			break;
+		case 0x4b: // C14 controls op1 release
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setRelease(channel, 0, inValue >> 5);
+			break;
+		case 0x4c: // C15 controls op1 waveform
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setWaveForm(channel, 0, inValue);
+			break;
+		default:
+			display.clearDisplay();
+			display.setCursor(0,0);
+			display.print("CC ");
+			display.print(inController, HEX);
+			display.print("=");
+			display.print(inValue, HEX);
+			display.display();
+			break;
+	}
 }
 
 void handlePitchBend(byte inChannel, int bend) {
