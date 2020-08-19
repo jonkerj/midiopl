@@ -74,6 +74,9 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 
 	// CC to OPL2 mapping based on my MK449c
 	switch (inController) {
+		/*
+		case 0x01: // mod wheel
+		*/
 		case 0x40: // sustain pedal
 			if (inValue > 0) {
 				sustain = true;
@@ -83,54 +86,61 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 				allNotesOff();
 			}
 			break;
-		case 0x49: // F1 controls op1 volume
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 0, inValue >> 1);
-			break;
-		case 0x48: // F2 controls op1 attack
+		case 0x49: // F1
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setAttack(channel, 0, inValue >> 3);
 			break;
-		case 0x5b: // F3 controls op1 decay
+		case 0x48: // F2
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setDecay(channel, 0, inValue >> 3);
 			break;
-		case 0x5d: // F4 controls op1 sustain
+		case 0x5b: // F3
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setSustain(channel, 0, inValue >> 3);
 			break;
-		case 0x4a: // F5 controls op1 release
+		case 0x5d: // F4
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setRelease(channel, 0, inValue >> 3);
 			break;
-		case 0x47: // F6 controls op1 waveform
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setWaveForm(channel, 0, inValue >> 5);
-			break;
-		case 0x0a: // C10 controls op2 volume
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 1, inValue >> 1);
-			break;
-		case 0x02: // C11 controls op1 attack
+		case 0x4a: // F5
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setAttack(channel, 1, inValue >> 3);
 			break;
-		case 0x0c: // C12 controls op1 decay
+		case 0x47: // F6
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setDecay(channel, 1, inValue >> 3);
 			break;
-		case 0x0d: // C13 controls op1 sustain
+		case 0x05: // F7
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setSustain(channel, 0, inValue >> 3);
 			break;
-		case 0x4b: // C14 controls op1 release
+		case 0x54: // F8
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setRelease(channel, 0, inValue >> 5);
 			break;
-		case 0x4c: // C15 controls op1 waveform
+		case 0x07: // F9
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setVolume(channel, 0, inValue >> 1);
+			break;
+		case 0x0a: // C10
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setWaveForm(channel, 0, inValue);
 			break;
+		case 0x02: // C11
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setWaveForm(channel, 0, inValue >> 5);
+			break;
+		case 0x0c: // C12
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setVolume(channel, 1, inValue >> 1);
+			break;
+		/*
+		case 0x0d: // C13
+		case 0x4b: // C14
+		case 0x4c: // C15
+		case 0x5c: // C16
+		case 0x5f: // C17
+		*/
 		default:
 			display.clearDisplay();
 			display.setCursor(0,0);
