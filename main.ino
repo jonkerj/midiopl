@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <math.h>
 #include "allocator.h"
 
 #define CHANNELS 9
@@ -17,6 +18,7 @@
 midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+int fnumbers[CHANNELS];
 
 /*
  OPL2 lib uses octave (0..7) and note (0..11) to address notes
@@ -41,6 +43,7 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 	if (24 <= inNote && inNote <= 119) {
 		byte channel = va.allocate(inNote);
 		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
+		fnumbers[channel] = opl2.getFNumber(channel);
 	}
 }
 
@@ -125,11 +128,12 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 }
 
 void handlePitchBend(byte inChannel, int bend) {
-	display.clearDisplay();
-	display.setCursor(0,0);
-	display.print("PB ");
-	display.print(bend);
-	display.display();
+	double factor = pow(2.0, (bend / 8192.0) / 6.0);
+
+	for(byte ch = 0; ch < CHANNELS; ch++) {
+		int newF = fnumbers[ch] * factor;
+		opl2.setFNumber(ch, newF);
+	}
 }
 
 void setup() {
