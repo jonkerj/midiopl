@@ -1,2 +1,2 @@
-ARDUINO_LIBS = SPI Arduino_OPL2 MIDI_Library
+ARDUINO_LIBS = SPI Arduino_OPL2 MIDIUSB
 include $(ARDUINO_MK_DIR)/Arduino.mk

@@ -1,12 +1,11 @@
-#include <MIDI.h>
-#include <midi_instruments.h>
+#include <MIDIUSB.h>
 #include <SPI.h>
 #include <OPL2.h>
+#include <midi_instruments.h>
 #include "allocator.h"
 
 #define CHANNELS 9
 
-MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
 
@@ -21,6 +20,7 @@ void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (24 <= inNote && inNote <= 119) {
 		byte channel = va.release(inNote);
 		opl2.setKeyOn(channel, false);
+		digitalWrite(LED_BUILTIN, LOW);
 	}
 }
 
@@ -52,14 +52,30 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 	}
 }
 
+void handleControlChange(byte inChannel, byte inController, byte inValue) {
+	switch (inController) {
+		case 0x0a: // mk449c left dial
+			handleProgramChange(inChannel, inValue);
+			break;
+	}
+}
+
 void setup() {
+	pinMode(LED_BUILTIN, OUTPUT);
 	opl2.init();
-	MIDI.setHandleNoteOn(handleNoteOn);
-	MIDI.setHandleNoteOff(handleNoteOff);
-	MIDI.setHandleProgramChange(handleProgramChange);
-	MIDI.begin();
 }
 
 void loop() {
-	MIDI.read();
+	midiEventPacket_t rx = MidiUSB.read();
+	switch (rx.header) {
+		case 0x9: // 0x90 = NoteOn
+			handleNoteOn(rx.byte1, rx.byte2, rx.byte3);
+			break;
+		case 0x8: // 0x80 = NoteOff
+			handleNoteOff(rx.byte1, rx.byte2, rx.byte3);
+			break;
+		case 0xc: // 0xc0 = Program Change
+			handleProgramChange(rx.byte1, rx.byte2);
+			break;
+	}
 }
