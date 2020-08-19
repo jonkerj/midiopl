@@ -2,12 +2,21 @@
 #include <SPI.h>
 #include <OPL2.h>
 #include <midi_instruments.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 #include "allocator.h"
 
 #define CHANNELS 9
 
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_RESET     -1
+
 midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 /*
  OPL2 lib uses octave (0..7) and note (0..11) to address notes
@@ -20,7 +29,6 @@ void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (24 <= inNote && inNote <= 119) {
 		byte channel = va.release(inNote);
 		opl2.setKeyOn(channel, false);
-		digitalWrite(LED_BUILTIN, LOW);
 	}
 }
 
@@ -53,16 +61,30 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 }
 
 void handleControlChange(byte inChannel, byte inController, byte inValue) {
-	switch (inController) {
-		case 0x0a: // mk449c left dial
-			handleProgramChange(inChannel, inValue);
-			break;
-	}
+	display.clearDisplay();
+	display.setCursor(0,0);
+	display.print("CC ");
+	display.print(inController, HEX);
+	display.print("=");
+	display.print(inValue, HEX);
+	display.display();
+}
+
+void handlePitchBend(byte inChannel, int bend) {
+	display.clearDisplay();
+	display.setCursor(0,0);
+	display.print("PB ");
+	display.print(bend);
+	display.display();
 }
 
 void setup() {
-	pinMode(LED_BUILTIN, OUTPUT);
 	opl2.init();
+	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+	display.clearDisplay();
+	display.display();
+	display.setTextColor(SSD1306_WHITE);        // Draw white text
+	display.setTextSize(2);
 }
 
 void loop() {
@@ -74,8 +96,15 @@ void loop() {
 		case 0x8: // 0x80 = NoteOff
 			handleNoteOff(rx.byte1, rx.byte2, rx.byte3);
 			break;
+		case 0xb: // 0xb0 = Control Change
+			handleControlChange(rx.byte1, rx.byte2, rx.byte3);
+			break;
 		case 0xc: // 0xc0 = Program Change
 			handleProgramChange(rx.byte1, rx.byte2);
+			break;
+		case 0xe: // 0xe0 = Pitch bend
+			int bend = (rx.byte3 << 7) + rx.byte2 - 0x2000;
+			handlePitchBend(rx.byte1, bend);
 			break;
 	}
 }
