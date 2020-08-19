@@ -19,6 +19,7 @@ midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 int fnumbers[CHANNELS];
+bool sustain;
 
 /*
  OPL2 lib uses octave (0..7) and note (0..11) to address notes
@@ -28,9 +29,11 @@ int fnumbers[CHANNELS];
 #define GET_NOTE(note)   (note % 12)
 
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
-	if (24 <= inNote && inNote <= 119) {
-		byte channel = va.release(inNote);
-		opl2.setKeyOn(channel, false);
+	if (! sustain) {
+		if (24 <= inNote && inNote <= 119) {
+			byte channel = va.release(inNote);
+			opl2.setKeyOn(channel, false);
+		}
 	}
 }
 
@@ -47,13 +50,17 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 	}
 }
 
-void handleProgramChange(byte inChannel, byte inProgram) {
+void allNotesOff() {
 	// release all voices
 	va.releaseAll();
 	// note-off these voices
 	for(int channel = 0; channel < CHANNELS; channel ++) {
 		opl2.setKeyOn(channel, false);
 	}
+}
+
+void handleProgramChange(byte inChannel, byte inProgram) {
+	allNotesOff();
 	// load program
 	if (inProgram < (sizeof(midiInstruments) / sizeof(midiInstruments[0]))) {
 		Instrument i = opl2.loadInstrument(midiInstruments[inProgram]);
@@ -67,6 +74,15 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 
 	// CC to OPL2 mapping based on my MK449c
 	switch (inController) {
+		case 0x40: // sustain pedal
+			if (inValue > 0) {
+				sustain = true;
+			}
+			else {
+				sustain = false;
+				allNotesOff();
+			}
+			break;
 		case 0x49: // F1 controls op1 volume
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setVolume(channel, 0, inValue >> 1);
@@ -143,6 +159,7 @@ void setup() {
 	display.display();
 	display.setTextColor(SSD1306_WHITE);        // Draw white text
 	display.setTextSize(2);
+	sustain = false;
 }
 
 void loop() {
