@@ -88,39 +88,39 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 			break;
 		case 0x49: // F1
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 0, inValue >> 3);
+				opl2.setAttack(channel, 0, 0xf - (inValue >> 3));
 			break;
 		case 0x48: // F2
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 0, inValue >> 3);
+				opl2.setDecay(channel, 0, 0xf - (inValue >> 3));
 			break;
 		case 0x5b: // F3
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, inValue >> 3);
+				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
 			break;
 		case 0x5d: // F4
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, inValue >> 3);
+				opl2.setRelease(channel, 0, 0xf - (inValue >> 3));
 			break;
 		case 0x4a: // F5
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 1, inValue >> 3);
+				opl2.setAttack(channel, 1, 0xf - (inValue >> 3));
 			break;
 		case 0x47: // F6
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 1, inValue >> 3);
+				opl2.setDecay(channel, 1, 0xf - (inValue >> 3));
 			break;
 		case 0x05: // F7
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, inValue >> 3);
+				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
 			break;
 		case 0x54: // F8
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, inValue >> 5);
+				opl2.setRelease(channel, 0, 0xf - (inValue >> 5));
 			break;
 		case 0x07: // F9
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 0, inValue >> 1);
+				opl2.setVolume(channel, 0, 0x3f - (inValue >> 1));
 			break;
 		case 0x0a: // C10
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
@@ -132,7 +132,7 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 			break;
 		case 0x0c: // C12
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 1, inValue >> 1);
+				opl2.setVolume(channel, 1, 0x3f - (inValue >> 1));
 			break;
 		/*
 		case 0x0d: // C13
