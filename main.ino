@@ -45,6 +45,7 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 	}
 	if (24 <= inNote && inNote <= 119) {
 		byte channel = va.allocate(inNote);
+		opl2.setVolume(channel, 1, 0x3f - (inVelocity >> 1));
 		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
 		fnumbers[channel] = opl2.getFNumber(channel);
 	}
@@ -130,11 +131,8 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setWaveForm(channel, 0, inValue >> 5);
 			break;
-		case 0x0c: // C12
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 1, 0x3f - (inValue >> 1));
-			break;
 		/*
+		case 0x0c: // C12
 		case 0x0d: // C13
 		case 0x4b: // C14
 		case 0x4c: // C15
