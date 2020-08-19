@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "allocator.h"
 
 namespace midiopl {
@@ -26,7 +27,7 @@ int VoiceAllocator::find_note(int note) {
 
 int VoiceAllocator::find_lru(bool playing) {
 	int found_i = -1;
-	unsigned int found_u = 0;
+	unsigned int found_u = UINT_MAX;
 
 	for(int i = 0; i < n_voices; i++) {
 		/* if...
