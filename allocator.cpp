@@ -90,6 +90,10 @@ void VoiceAllocator::releaseAll() {
 	}
 }
 
+bool VoiceAllocator::playing(int voice) {
+	return (voices[voice].note >= 0);
+}
+
 void VoiceAllocator::touch(int voice, int note) {
 	voices[voice].lru = t++;
 	voices[voice].note = note;

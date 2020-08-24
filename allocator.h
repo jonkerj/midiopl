@@ -15,6 +15,7 @@ class VoiceAllocator {
 		int allocate(int note);
 		int release(int note);
 		void releaseAll();
+		bool playing(int voice);
 	private:
 		va_entry * voices;
 		int n_voices;

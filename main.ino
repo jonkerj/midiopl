@@ -28,11 +28,42 @@ bool sustain;
 #define GET_OCTAVE(note) (note / 12 - 2)
 #define GET_NOTE(note)   (note % 12)
 
+#define PS_SIZE 8
+#define PS_OFF_X 0
+#define PS_OFF_Y 16
+
+void drawPolyOutline() {
+	for(byte channel = 0; channel < CHANNELS; channel++) {
+		display.drawRect( \
+			PS_OFF_X + channel * PS_SIZE, \
+			PS_OFF_Y, \
+			PS_SIZE, \
+			PS_SIZE, \
+			SSD1306_WHITE \
+		);
+	}
+	display.display();
+}
+
+void drawPolyStatus() {
+	for(byte channel = 0; channel < CHANNELS; channel++) {
+		display.fillRect( \
+			PS_OFF_X + channel * PS_SIZE + 1, \
+			PS_OFF_Y + 1, \
+			PS_SIZE - 2, \
+			PS_SIZE - 2, \
+			va.playing(channel) ? SSD1306_WHITE : SSD1306_BLACK \
+		);
+	}
+	display.display();
+}
+
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (! sustain) {
 		if (24 <= inNote && inNote <= 119) {
 			byte channel = va.release(inNote);
 			opl2.setKeyOn(channel, false);
+			drawPolyStatus();
 		}
 	}
 }
@@ -48,6 +79,7 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 		opl2.setVolume(channel, 1, 0x3f - (inVelocity >> 1));
 		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
 		fnumbers[channel] = opl2.getFNumber(channel);
+		drawPolyStatus();
 	}
 }
 
@@ -164,10 +196,11 @@ void setup() {
 	opl2.init();
 	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 	display.clearDisplay();
-	display.display();
 	display.setTextColor(SSD1306_WHITE);        // Draw white text
-	display.setTextSize(2);
+	display.setTextSize(1);
+	display.display();
 	sustain = false;
+	drawPolyOutline();
 }
 
 void loop() {
