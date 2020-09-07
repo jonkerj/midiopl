@@ -1,4 +1,4 @@
-#include <MIDIUSB.h>
+#include <MIDI.h>
 #include <OPL2.h>
 #include <platform_arduino.h> // OPL2 custom platforms
 #include <midi_instruments.h>
@@ -7,6 +7,7 @@
 
 #define CHANNELS 9
 
+MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(CHANNELS);
 WiringShiftOut wso(3, 4, 5, 6, 7);
 OPL2 opl2(&wso);
@@ -160,26 +161,16 @@ void setup() {
 	blink(200, 50, 2);
 	sustain = false;
 	blink(200, 150, 3);
+
+	MIDI.begin();
+
+	MIDI.setHandleNoteOn(handleNoteOn);
+	MIDI.setHandleNoteOff(handleNoteOff);
+	MIDI.setHandleControlChange(handleControlChange);
+	MIDI.setHandleProgramChange(handleProgramChange);
+	MIDI.setHandlePitchBend(handlePitchBend);
 }
 
 void loop() {
-	midiEventPacket_t rx = MidiUSB.read();
-	switch (rx.header) {
-		case 0x9: // 0x90 = NoteOn
-			handleNoteOn(rx.byte1, rx.byte2, rx.byte3);
-			break;
-		case 0x8: // 0x80 = NoteOff
-			handleNoteOff(rx.byte1, rx.byte2, rx.byte3);
-			break;
-		case 0xb: // 0xb0 = Control Change
-			handleControlChange(rx.byte1, rx.byte2, rx.byte3);
-			break;
-		case 0xc: // 0xc0 = Program Change
-			handleProgramChange(rx.byte1, rx.byte2);
-			break;
-		case 0xe: // 0xe0 = Pitch bend
-			int bend = (rx.byte3 << 7) + rx.byte2 - 0x2000;
-			handlePitchBend(rx.byte1, bend);
-			break;
-	}
+	MIDI.read();
 }
