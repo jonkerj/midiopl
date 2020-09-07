@@ -1,5 +1,6 @@
 #include <MIDIUSB.h>
 #include <OPL2.h>
+#include <platform_arduino.h> // OPL2 custom platforms
 #include <midi_instruments.h>
 #include <math.h>
 #include "allocator.h"
@@ -7,7 +8,8 @@
 #define CHANNELS 9
 
 midiopl::VoiceAllocator va(CHANNELS);
-OPL2 opl2;
+WiringShiftOut wso(8, 9, 10, 11, 12);
+OPL2 opl2(&wso);
 int fnumbers[CHANNELS];
 bool sustain;
 
