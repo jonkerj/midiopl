@@ -1,23 +1,13 @@
 #include <MIDIUSB.h>
-#include <SPI.h>
 #include <OPL2.h>
 #include <midi_instruments.h>
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <math.h>
 #include "allocator.h"
 
 #define CHANNELS 9
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define OLED_RESET     -1
-
 midiopl::VoiceAllocator va(CHANNELS);
 OPL2 opl2;
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 int fnumbers[CHANNELS];
 bool sustain;
 
@@ -28,42 +18,11 @@ bool sustain;
 #define GET_OCTAVE(note) (note / 12 - 2)
 #define GET_NOTE(note)   (note % 12)
 
-#define PS_SIZE 8
-#define PS_OFF_X 0
-#define PS_OFF_Y 16
-
-void drawPolyOutline() {
-	for(byte channel = 0; channel < CHANNELS; channel++) {
-		display.drawRect( \
-			PS_OFF_X + channel * PS_SIZE, \
-			PS_OFF_Y, \
-			PS_SIZE, \
-			PS_SIZE, \
-			SSD1306_WHITE \
-		);
-	}
-	display.display();
-}
-
-void drawPolyStatus() {
-	for(byte channel = 0; channel < CHANNELS; channel++) {
-		display.fillRect( \
-			PS_OFF_X + channel * PS_SIZE + 1, \
-			PS_OFF_Y + 1, \
-			PS_SIZE - 2, \
-			PS_SIZE - 2, \
-			va.playing(channel) ? SSD1306_WHITE : SSD1306_BLACK \
-		);
-	}
-	display.display();
-}
-
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (! sustain) {
 		if (24 <= inNote && inNote <= 119) {
 			byte channel = va.release(inNote);
 			opl2.setKeyOn(channel, false);
-			drawPolyStatus();
 		}
 	}
 }
@@ -79,7 +38,6 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 		opl2.setVolume(channel, 1, 0x3f - (inVelocity >> 1));
 		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
 		fnumbers[channel] = opl2.getFNumber(channel);
-		drawPolyStatus();
 	}
 }
 
@@ -171,15 +129,6 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 		case 0x5c: // C16
 		case 0x5f: // C17
 		*/
-		default:
-			display.clearDisplay();
-			display.setCursor(0,0);
-			display.print("CC ");
-			display.print(inController, HEX);
-			display.print("=");
-			display.print(inValue, HEX);
-			display.display();
-			break;
 	}
 }
 
@@ -192,15 +141,23 @@ void handlePitchBend(byte inChannel, int bend) {
 	}
 }
 
+void blink(int onTime, int offTime, int times) {
+	for(int c = 0; c < times; c++) {
+		digitalWrite(LED_BUILTIN, HIGH);
+		delay(onTime);
+		digitalWrite(LED_BUILTIN, LOW);
+		delay(offTime);
+	}
+}
+
 void setup() {
+	pinMode(LED_BUILTIN, OUTPUT);
+	blink(100, 50, 1);
+
 	opl2.init();
-	display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-	display.clearDisplay();
-	display.setTextColor(SSD1306_WHITE);        // Draw white text
-	display.setTextSize(1);
-	display.display();
+	blink(200, 50, 2);
 	sustain = false;
-	drawPolyOutline();
+	blink(200, 150, 3);
 }
 
 void loop() {
