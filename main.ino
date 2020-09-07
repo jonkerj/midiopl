@@ -8,7 +8,7 @@
 #define CHANNELS 9
 
 midiopl::VoiceAllocator va(CHANNELS);
-WiringShiftOut wso(8, 9, 10, 11, 12);
+WiringShiftOut wso(3, 4, 5, 6, 7);
 OPL2 opl2(&wso);
 int fnumbers[CHANNELS];
 bool sustain;
