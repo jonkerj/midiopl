@@ -5,7 +5,13 @@
 #include <math.h>
 #include "allocator.h"
 
+#ifdef PERCUSSION_ENABLED
+#include "drums.h"
+#warning "We will be using percussion"
+#define CHANNELS 6
+#else
 #define CHANNELS 9
+#endif
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(CHANNELS);
@@ -22,11 +28,32 @@ bool sustain;
 #define GET_NOTE(note)   (note % 12)
 
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
-	if (! sustain) {
-		if (24 <= inNote && inNote <= 119) {
-			byte channel = va.release(inNote);
-			opl2.setKeyOn(channel, false);
+#ifdef PERCUSSION_ENABLED
+	if (24 <= inNote && inNote <= 28) {
+		byte drumState = opl2.getDrums();
+		switch(inNote) {
+			case 24:
+				drumState &= ~DRUM_BITS_BASS;
+				break;
+			case 25:
+				drumState &= ~DRUM_BITS_SNARE;
+				break;
+			case 26:
+				drumState &= ~DRUM_BITS_TOM;
+				break;
+			case 27:
+				drumState &= ~DRUM_BITS_CYMBAL;
+				break;
+			case 28:
+				drumState &= ~DRUM_BITS_HI_HAT;
+				break;
 		}
+		opl2.setDrums(drumState);
+	}
+#endif
+	if (!sustain && (29 <= inNote && inNote <= 119)) {
+		byte channel = va.release(inNote);
+		opl2.setKeyOn(channel, false);
 	}
 }
 
@@ -36,7 +63,30 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 		handleNoteOff(inChannel, inNote, inVelocity);
 		return;
 	}
-	if (24 <= inNote && inNote <= 119) {
+#ifdef PERCUSSION_ENABLED
+	if (24 <= inNote && inNote <= 28) {
+		byte drumState = opl2.getDrums();
+		switch(inNote) {
+			case 24:
+				drumState |= DRUM_BITS_BASS;
+				break;
+			case 25:
+				drumState |= DRUM_BITS_SNARE;
+				break;
+			case 26:
+				drumState |= DRUM_BITS_TOM;
+				break;
+			case 27:
+				drumState |= DRUM_BITS_CYMBAL;
+				break;
+			case 28:
+				drumState |= DRUM_BITS_HI_HAT;
+				break;
+		}
+		opl2.setDrums(drumState);
+	}
+#endif
+	if (29 <= inNote && inNote <= 119) {
 		byte channel = va.allocate(inNote);
 		opl2.setVolume(channel, 1, 0x3f - (inVelocity >> 1));
 		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
@@ -51,6 +101,10 @@ void allNotesOff() {
 	for(int channel = 0; channel < CHANNELS; channel ++) {
 		opl2.setKeyOn(channel, false);
 	}
+#ifdef PERCUSSION_ENABLED
+	// disable all drums
+	opl2.setDrums(0x00);
+#endif
 }
 
 void handleProgramChange(byte inChannel, byte inProgram) {
@@ -153,6 +207,25 @@ void setup() {
 	blink(200, 50, 2);
 	sustain = false;
 	blink(200, 150, 3);
+#ifdef PERCUSSION_ENABLED
+	Instrument bass = opl2.loadInstrument(INSTRUMENT_BDRUM2);
+	Instrument snare = opl2.loadInstrument(INSTRUMENT_RKSNARE1);
+	Instrument tom = opl2.loadInstrument(INSTRUMENT_TOM2);
+	Instrument cymbal = opl2.loadInstrument(INSTRUMENT_CYMBAL1);
+	Instrument hihat = opl2.loadInstrument(INSTRUMENT_HIHAT2);
+	opl2.setPercussion(true);
+	opl2.setDrumInstrument(bass);
+	opl2.setDrumInstrument(snare);
+	opl2.setDrumInstrument(tom);
+	opl2.setDrumInstrument(cymbal);
+	opl2.setDrumInstrument(hihat);
+	opl2.setBlock(6, 4);
+	opl2.setFNumber(6, opl2.getNoteFNumber(NOTE_C));
+	opl2.setBlock(7, 3);
+	opl2.setFNumber(7, opl2.getNoteFNumber(NOTE_C));
+	opl2.setBlock(8, 3);
+	opl2.setFNumber(8, opl2.getNoteFNumber(NOTE_A));
+#endif
 
 	MIDI.begin();
 
