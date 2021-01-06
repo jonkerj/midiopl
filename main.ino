@@ -9,7 +9,7 @@
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(CHANNELS);
-WiringShiftOut wso(3, 4, 5, 6, 7);
+WiringShiftOut wso(4, 5, 3, 6, 7);
 OPL2 opl2(&wso);
 int fnumbers[CHANNELS];
 bool sustain;
