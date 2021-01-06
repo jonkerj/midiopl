@@ -66,7 +66,7 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 
 void handleControlChange(byte inChannel, byte inController, byte inValue) {
 
-	// CC to OPL2 mapping based on my MK449c
+	// CC to OPL2 mapping based on my M-Audio Code 61
 	switch (inController) {
 		/*
 		case 0x01: // mod wheel
@@ -80,58 +80,50 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 				allNotesOff();
 			}
 			break;
-		case 0x49: // F1
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x48: // F2
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x5b: // F3
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x5d: // F4
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x4a: // F5
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 1, 0xf - (inValue >> 3));
-			break;
-		case 0x47: // F6
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 1, 0xf - (inValue >> 3));
-			break;
-		case 0x05: // F7
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x54: // F8
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, 0xf - (inValue >> 5));
-			break;
-		case 0x07: // F9
+		case 0x76: // F1
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setVolume(channel, 0, 0x3f - (inValue >> 1));
 			break;
-		case 0x0a: // C10
+		case 0x77: // F2
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setAttack(channel, 0, 0xf - (inValue >> 3));
+			break;
+		case 0x78: // F3
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setDecay(channel, 0, 0xf - (inValue >> 3));
+			break;
+		case 0x79: // F4
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
+			break;
+		case 0x7a: // F5
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setRelease(channel, 0, 0xf - (inValue >> 3));
+			break;
+		case 0x7b: // F6
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setAttack(channel, 1, 0xf - (inValue >> 3));
+			break;
+		case 0x7c: // F7
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setDecay(channel, 1, 0xf - (inValue >> 3));
+			break;
+		case 0x7d: // F8
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
+			break;
+		case 0x7e: // F9
+			for(byte channel = 0; channel < CHANNELS; channel ++) 
+				opl2.setRelease(channel, 0, 0xf - (inValue >> 5));
+			break;
+		case 0x23: // E1
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setWaveForm(channel, 0, inValue);
 			break;
-		case 0x02: // C11
+		case 0x29: // E2
 			for(byte channel = 0; channel < CHANNELS; channel ++) 
 				opl2.setWaveForm(channel, 0, inValue >> 5);
 			break;
-		/*
-		case 0x0c: // C12
-		case 0x0d: // C13
-		case 0x4b: // C14
-		case 0x4c: // C15
-		case 0x5c: // C16
-		case 0x5f: // C17
-		*/
 	}
 }
 
