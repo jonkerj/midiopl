@@ -1,6 +1,5 @@
 #include <MIDI.h>
 #include <OPL2.h>
-#include <platform_arduino.h> // OPL2 custom platforms
 #include <midi_instruments.h>
 #include <math.h>
 #include "allocator.h"
@@ -9,8 +8,7 @@
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 midiopl::VoiceAllocator va(CHANNELS);
-WiringShiftOut wso(4, 5, 3, 6, 7);
-OPL2 opl2(&wso);
+OPL2 opl2;
 int fnumbers[CHANNELS];
 bool sustain;
 
