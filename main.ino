@@ -1,18 +1,19 @@
 #include <MIDI.h>
-#include <OPL2.h>
-#include <midi_instruments.h>
+#include <OPL3Duo.h>
+#include <midi_instruments_4op.h>
 #include <math.h>
+
 #include "allocator.h"
 
-#define CHANNELS 6
+#define VOICES 12
 
 MIDI_CREATE_DEFAULT_INSTANCE();
-midiopl::VoiceAllocator va(CHANNELS);
-OPL2 opl2;
-int fnumbers[CHANNELS];
+midiopl::VoiceAllocator va(VOICES);
+OPL3Duo opl3;
+int fnumbers[VOICES];
 bool sustain;
 
-/*
+/**
  OPL2 lib uses octave (0..7) and note (0..11) to address notes
  It seems MIDI C2 (=note 24) corresponds with OPL2 octave 0, note 0
 */
@@ -21,8 +22,9 @@ bool sustain;
 
 void handleNoteOff(byte inChannel, byte inNote, byte inVelocity) {
 	if (!sustain && (24 <= inNote && inNote <= 119)) {
-		byte channel = va.release(inNote);
-		opl2.setKeyOn(channel, false);
+		byte voice = va.release(inNote);
+		byte channel = opl3.get4OPControlChannel(voice);
+		opl3.setKeyOn(channel, false);
 	}
 }
 
@@ -33,10 +35,12 @@ void handleNoteOn(byte inChannel, byte inNote, byte inVelocity) {
 		return;
 	}
 	if (24 <= inNote && inNote <= 119) {
-		byte channel = va.allocate(inNote);
-		opl2.setVolume(channel, 1, 0x3f - (inVelocity >> 1));
-		opl2.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
-		fnumbers[channel] = opl2.getFNumber(channel);
+		byte voice = va.allocate(inNote);
+		byte channel = opl3.get4OPControlChannel(voice);
+		byte volume = 0x3f - (inVelocity >> 1);
+		opl3.set4OPChannelVolume(channel, volume);
+		opl3.playNote(channel, GET_OCTAVE(inNote), GET_NOTE(inNote));
+		fnumbers[voice] = opl3.getFNumber(channel);
 	}
 }
 
@@ -44,8 +48,9 @@ void allNotesOff() {
 	// release all voices
 	va.releaseAll();
 	// note-off these voices
-	for(int channel = 0; channel < CHANNELS; channel ++) {
-		opl2.setKeyOn(channel, false);
+	for(int voice = 0; voice < VOICES; voice ++) {
+		byte channel = opl3.get4OPControlChannel(voice);
+		opl3.setKeyOn(channel, false);
 	}
 }
 
@@ -53,20 +58,18 @@ void handleProgramChange(byte inChannel, byte inProgram) {
 	allNotesOff();
 	// load program
 	if (inProgram < (sizeof(midiInstruments) / sizeof(midiInstruments[0]))) {
-		Instrument i = opl2.loadInstrument(midiInstruments[inProgram]);
-		for(int channel = 0; channel < CHANNELS; channel ++) {
-			opl2.setInstrument(channel, i);
+		Instrument4OP i = opl3.loadInstrument4OP(midiInstruments[inProgram]);
+		for(int voice = 0; voice < VOICES; voice ++) {
+			byte channel = opl3.get4OPControlChannel(voice);
+			opl3.setInstrument4OP(channel, i);
 		}
 	}
 }
 
 void handleControlChange(byte inChannel, byte inController, byte inValue) {
 
-	// CC to OPL2 mapping based on my M-Audio Code 61
+	// CC to OPL mapping based on my M-Audio Code 61
 	switch (inController) {
-		/*
-		case 0x01: // mod wheel
-		*/
 		case 0x40: // sustain pedal
 			if (inValue > 0) {
 				sustain = true;
@@ -76,49 +79,8 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 				allNotesOff();
 			}
 			break;
-		case 0x76: // F1
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setVolume(channel, 0, 0x3f - (inValue >> 1));
-			break;
-		case 0x77: // F2
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x78: // F3
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x79: // F4
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x7a: // F5
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x7b: // F6
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setAttack(channel, 1, 0xf - (inValue >> 3));
-			break;
-		case 0x7c: // F7
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setDecay(channel, 1, 0xf - (inValue >> 3));
-			break;
-		case 0x7d: // F8
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setSustain(channel, 0, 0xf - (inValue >> 3));
-			break;
-		case 0x7e: // F9
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setRelease(channel, 0, 0xf - (inValue >> 5));
-			break;
 		case 0x23: // E1
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setWaveForm(channel, 0, inValue);
-			break;
-		case 0x29: // E2
-			for(byte channel = 0; channel < CHANNELS; channel ++) 
-				opl2.setWaveForm(channel, 0, inValue >> 5);
+			handleProgramChange(inChannel, inValue);
 			break;
 	}
 }
@@ -126,9 +88,12 @@ void handleControlChange(byte inChannel, byte inController, byte inValue) {
 void handlePitchBend(byte inChannel, int bend) {
 	double factor = pow(2.0, (bend / 8192.0) / 6.0);
 
-	for(byte ch = 0; ch < CHANNELS; ch++) {
-		int newF = fnumbers[ch] * factor;
-		opl2.setFNumber(ch, newF);
+	for(byte voice = 0; voice < VOICES; voice++) {
+		if (va.playing(voice)) {
+			int newF = fnumbers[voice] * factor;
+			byte channel = opl3.get4OPControlChannel(voice);
+			opl3.setFNumber(channel, newF);
+		}
 	}
 }
 
@@ -145,8 +110,9 @@ void setup() {
 	pinMode(LED_BUILTIN, OUTPUT);
 	blink(100, 50, 1);
 
-	opl2.init();
-	blink(200, 50, 2);
+	opl3.init();
+	opl3.setOPL3Enabled(true);
+	opl3.setAll4OPChannelsEnabled(true);
 	sustain = false;
 	blink(200, 150, 3);
 
